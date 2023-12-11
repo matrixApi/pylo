@@ -1,0 +1,1355 @@
+diff --git a/WWW/Library/Implementation/HTTP.c b/WWW/Library/Implementation/HTTP.c
+index 1527e5c..f0ba99d 100644
+--- a/WWW/Library/Implementation/HTTP.c
++++ b/WWW/Library/Implementation/HTTP.c
+@@ -720,7 +720,9 @@ static int HTLoadHTTP(const char *arg,
+ #elif SSLEAY_VERSION_NUMBER >= 0x0900
+ #ifndef USE_NSS_COMPAT_INCL
+ 	if (!try_tls) {
++#if 0
+ 	    handle->options |= SSL_OP_NO_TLSv1;
++#endif // 0
+ #if OPENSSL_VERSION_NUMBER >= 0x0090806fL && !defined(OPENSSL_NO_TLSEXT)
+ 	} else {
+ 	    int ret = (int) SSL_set_tlsext_host_name(handle, ssl_host);
+diff --git a/WWW/Library/Implementation/makefile b/WWW/Library/Implementation/makefile
+new file mode 100644
+index 0000000..0819827
+--- /dev/null
++++ b/WWW/Library/Implementation/makefile
+@@ -0,0 +1,380 @@
++# $LynxId: makefile.in,v 1.31 2012/08/12 23:55:17 tom Exp $
++# Make WWW under unix for a.n.other unix system (bsd)
++# Use this as a template
++
++# For W3 distribution, machine type for subdirectories
++WWW_MACH	= Implementation
++WWWINC		= $(top_srcdir)/WWW/Library/Implementation
++
++ECHO =		
++LFLAGS =
++
++prefix		= /usr/local
++exec_prefix	= ${prefix}
++datarootdir	= ${prefix}/share
++top_srcdir	= ../../..
++srcdir		= .
++
++
++LYFLAGS		= # FIXME: set in parent makefile
++
++CC		= gcc
++DEFS		= -DHAVE_CONFIG_H
++EXTRA_CPPFLAGS	= 
++CPPFLAGS	=  -D_GNU_SOURCE  -DLINUX
++
++AR		= ar
++ARFLAGS		= -curv
++
++RANLIB		= ranlib
++
++o		= .o
++x		= 
++
++INTLDIR_CPPFLAGS= # -I$(top_srcdir)/intl
++
++CPP		= gcc -E
++CPPOPTS		= $(DEFS) $(LYFLAGS) \
++		-I../../.. \
++		-I../../../src \
++		-I$(top_srcdir) \
++		-I$(top_srcdir)/src \
++		$(INTLDIR_CPPFLAGS) -I$(WWWINC) $(EXTRA_CPPFLAGS) $(CPPFLAGS)
++
++# WTF aren't these used but ../../../makefile are?
++LY_CFLAGS	= -O2 -fPIC 
++CFLAGS		= $(CPPOPTS) $(LY_CFLAGS)
++
++LINT		= 
++LINTOPTS	=
++
++CTAGS		= 
++
++# Directory for installed binary:
++BINDIR		= ${exec_prefix}/bin
++
++# Where is the W3 object library to be installed (not normally done)?
++#_________________ OK if normal W3 distribution
++# Where is the WWW source root?
++WWW = $(top_srcdir)/WWW
++
++#  Where should temporary (object) files go?
++WTMP = ../..
++
++# (Version.make)
++VC = 2.14
++#______________________________________________________________________
++# (originally CommonMakefile)
++
++#  If this env var is set to something else Some makes will use that instead
++SHELL = /bin/sh
++
++#	.h files are distributed but originally are made from the
++#	self-documenting hypertext files.
++
++.SUFFIXES: .h .html
++.html.h:
++#	- chmod +w $*.h
++	www -w90 -na -to text/x-c $*.html > $*.h
++#	chmod -w $*.h
++
++# If this is actually run in a subdirectory,
++#
++# WWW = ../../..
++# WWW = ../..	For [cernlib] build in this directory
++
++CMN = $(WWW)/Library/Implementation/
++
++# Where shall we put the objects and built library?
++
++LOB = .
++
++# Only needed if HTWAIS.c is to be compiled. Put into your Makefile.include
++#  uncomment these and fill in WAISINC for adding direct wais access
++#  to Lynx.
++#HTWAIS_c = $(CMN)/HTWAIS.c
++#HTWAIS_o = $(LOB)/HTWAIS$o
++#WAIS = YES
++#WAISINC = -I../../../../freeWAIS-0.202/ir
++#WAISCFLAGS = -DDIRECT_WAIS
++#
++
++# add -DNEW_GATEWAY here for the new gateway config stuff
++CFLAGS2 = $(CFLAGS) $(LYFLAGS) $(WAISCFLAGS) -I$(CMN) -DACCESS_AUTH
++
++COMPILE	= $(ECHO) $(CC) $(CFLAGS2) -c
++
++COMMON = $(LOB)/HTParse$o $(LOB)/HTAccess$o $(LOB)/HTTP$o \
++	$(LOB)/HTFile$o	$(LOB)/HTBTree$o $(LOB)/HTFTP$o $(LOB)/HTTCP$o \
++	$(LOB)/SGML$o $(LOB)/HTMLDTD$o $(LOB)/HTChunk$o \
++	$(LOB)/HTPlain$o \
++	$(LOB)/HTMLGen$o \
++	$(LOB)/HTAtom$o $(LOB)/HTAnchor$o $(LOB)/HTStyle$o \
++	$(LOB)/HTList$o $(LOB)/HTString$o \
++	$(LOB)/HTRules$o $(LOB)/HTFormat$o  $(LOB)/HTMIME$o \
++	$(LOB)/HTNews$o  $(LOB)/HTGopher$o \
++	$(LOB)/HTTelnet$o $(LOB)/HTFinger$o $(LOB)/HTWSRC$o $(HTWAIS_o) \
++	$(LOB)/HTAAUtil$o $(LOB)/HTAABrow$o \
++	$(LOB)/HTGroup$o \
++	$(LOB)/HTAAProt$o \
++	$(LOB)/HTAssoc$o  $(LOB)/HTLex$o    $(LOB)/HTUU$o \
++	$(LOB)/HTDOS$o
++
++CFILES = $(CMN)HTParse.c $(CMN)HTAccess.c $(CMN)HTTP.c $(CMN)HTFile.c \
++	$(CMN)HTBTree.c \
++	$(CMN)HTFTP.c	$(CMN)HTTCP.c	  $(CMN)SGML.c \
++	$(CMN)HTMLDTD.c \
++	$(CMN)HTPlain.c	\
++	$(CMN)HTMLGen.c \
++	$(CMN)HTChunk.c $(CMN)HTAtom.c    $(CMN)HTAnchor.c $(CMN)HTStyle.c \
++	$(CMN)HTList.c  $(CMN)HTString.c  $(CMN)HTRules.c \
++	$(CMN)HTFormat.c $(CMN)HTMIME.c \
++	$(CMN)HTNews.c  $(CMN)HTGopher.c  $(CMN)HTTelnet.c \
++	$(CMN)HTFinger.c $(HTWAIS_c)	  $(CMN)HTWSRC.c \
++	$(CMN)HTAABrow.c \
++	$(CMN)HTGroup.c  \
++	$(CMN)HTAAProt.c \
++	$(CMN)HTAssoc.c  $(CMN)HTLex.c    $(CMN)HTUU.c
++
++HFILES = $(CMN)HTParse.h $(CMN)HTAccess.h $(CMN)HTTP.h $(CMN)HTFile.h \
++	$(CMN)HTBTree.h $(CMN)HTFTP.h $(CMN)HTTCP.h \
++	$(CMN)SGML.h $(CMN)HTML.h $(CMN)HTMLDTD.h $(CMN)HTChunk.h \
++	$(CMN)HTPlain.h	\
++	$(CMN)HTFWriter.h	$(CMN)HTMLGen.h \
++	$(CMN)HTStream.h \
++	$(CMN)HTAtom.h $(CMN)HTAnchor.h $(CMN)HTStyle.h \
++	$(CMN)HTList.h \
++	$(CMN)HTString.h $(CMN)HTRules.h \
++	$(CMN)HTFormat.h $(CMN)HTInit.h \
++	$(CMN)HTMIME.h $(CMN)HTNews.h \
++	$(CMN)HTGopher.h \
++	$(CMN)HTUtils.h $(CMN)www_tcp.h $(CMN)HText.h \
++	$(CMN)HTTelnet.h $(CMN)HTFinger.h \
++	$(CMN)HTWAIS.h  $(CMN)HTWSRC.h \
++	$(CMN)HTAABrow.h \
++	$(CMN)HTGroup.h  \
++	$(CMN)HTAAProt.h \
++	$(CMN)HTAssoc.h  $(CMN)HTLex.h    $(CMN)HTUU.h
++
++C_SRC		= $(COMMON:$o=.c)
++
++all : $(LOB)/libwww.a
++
++lint:
++	$(LINT) $(LINTOPTS) $(CPPOPTS) $(C_SRC) 2>&1 |tee ../../../lint.libwww
++
++.SUFFIXES: $o .i .h .html
++
++.c$o:
++	
++	$(CC) $(CPPOPTS) $(CFLAGS) -c $(srcdir)/$*.c
++
++.c.i:
++	
++	$(CPP) -C $(CPPOPTS) $(srcdir)/$*.c >$@
++
++depend :
++	makedepend -fmakefile -- $(CFLAGS) -- $(CFILES)
++
++#	Library
++#
++#  On SGI, ranlib is unnecessary and does not exist so we ignore errors
++# for that step
++$(LOB)/libwww.a : $(COMMON)
++	$(AR) $(ARFLAGS) $(LOB)/libwww.a $(COMMON)
++	-$(RANLIB) $(LOB)/libwww.a
++
++#	Clean up everything generatable except final products
++clean :
++	rm -f core *.core *.leaks *.[oi] *.bak tags TAGS
++	rm -f dtd_util$x
++	rm -f $(LOB)/*$o
++
++distclean : clean
++	@echo made $@
++
++tags:
++	$(CTAGS) *.[ch]
++
++#			Common code
++#			-----------
++
++$(LOB)/HTList$o : $(CMN)HTList.c $(CMN)HTUtils.h $(CMN)HTList.h
++	$(COMPILE) $(CMN)HTList.c
++
++$(LOB)/HTAnchor$o : $(CMN)HTAnchor.c $(CMN)HTUtils.h $(CMN)HTList.h
++	$(COMPILE) $(CMN)HTAnchor.c
++
++$(LOB)/HTFormat$o : $(CMN)HTFormat.c $(CMN)HTUtils.h $(CMN)HTList.h
++	$(COMPILE) $(CMN)HTFormat.c
++
++$(LOB)/HTMIME$o : $(CMN)HTMIME.c $(CMN)HTUtils.h $(CMN)HTList.h
++	$(COMPILE) $(CMN)HTMIME.c
++
++$(LOB)/HTNews$o : $(CMN)HTNews.c $(CMN)HTUtils.h $(CMN)HTList.h\
++	 $(CMN)HTMLDTD.h
++	$(COMPILE) $(CMN)HTNews.c
++
++$(LOB)/HTGopher$o : $(CMN)HTGopher.c $(CMN)HTUtils.h $(CMN)HTList.h \
++	 $(CMN)HTMLDTD.h
++	$(COMPILE) $(CMN)HTGopher.c
++
++$(LOB)/HTTelnet$o : $(CMN)HTTelnet.c $(CMN)HTUtils.h $(CMN)HTTelnet.h $(CMN)../../../userdefs.h
++	$(COMPILE) $(CMN)HTTelnet.c
++
++$(LOB)/HTFinger$o : $(CMN)HTFinger.c $(CMN)HTUtils.h $(CMN)HTList.h \
++	$(CMN)HTMLDTD.h
++	$(COMPILE) $(CMN)HTFinger.c
++
++$(LOB)/HTStyle$o : $(CMN)HTStyle.c $(CMN)HTUtils.h
++	$(COMPILE) $(CMN)HTStyle.c
++
++$(LOB)/HTAtom$o : $(CMN)HTAtom.c $(CMN)HTUtils.h $(CMN)HTList.h
++	$(COMPILE) $(CMN)HTAtom.c
++
++$(LOB)/HTChunk$o : $(CMN)HTChunk.c $(CMN)HTUtils.h
++	$(COMPILE) $(CMN)HTChunk.c
++
++$(LOB)/HTString$o : $(CMN)HTString.c $(CMN)HTUtils.h $(CMN)Version.make
++	$(COMPILE) -DVC=\"$(VC)\" $(CMN)HTString.c
++
++$(LOB)/HTRules$o : $(CMN)HTRules.c $(CMN)HTUtils.h $(CMN)Version.make \
++	 $(CMN)HTAAProt.h
++	$(COMPILE) -DVC=\"$(VC)\" $(CMN)HTRules.c
++
++$(LOB)/SGML$o : $(CMN)SGML.c $(CMN)HTUtils.h $(CMN)UCAux.h
++	$(COMPILE) $(CMN)SGML.c
++
++$(LOB)/HTMLGen$o : $(CMN)HTMLGen.c $(CMN)HTUtils.h $(CMN)HTMLDTD.h
++	$(COMPILE) $(CMN)HTMLGen.c
++
++$(LOB)/HTMLDTD$o : $(CMN)HTMLDTD.c $(CMN)SGML.h
++	$(COMPILE) $(CMN)HTMLDTD.c
++
++$(LOB)/HTPlain$o : $(CMN)HTPlain.c $(CMN)HTPlain.h $(CMN)HTStream.h \
++	 $(CMN)UCAux.h
++	$(COMPILE) $(CMN)HTPlain.c
++
++$(LOB)/HTWAIS$o : $(CMN)HTWAIS.c $(CMN)HTUtils.h $(CMN)HTList.h
++	$(COMPILE) $(WAISINC) $(CMN)HTWAIS.c
++
++$(LOB)/HTWSRC$o : $(CMN)HTWSRC.c $(CMN)HTUtils.h $(CMN)HTList.h
++	$(COMPILE) $(CMN)HTWSRC.c
++
++#	Access Authorization
++
++$(LOB)/HTAAUtil$o : $(CMN)HTAAUtil.c $(CMN)HTAAUtil.h \
++	 $(CMN)HTUtils.h $(CMN)HTString.h
++	$(COMPILE) $(CMN)HTAAUtil.c
++
++$(LOB)/HTGroup$o : $(CMN)HTGroup.c $(CMN)HTGroup.h \
++	 $(CMN)HTAAUtil.h \
++	 $(CMN)HTAssoc.h $(CMN)HTLex.h
++	$(COMPILE) $(CMN)HTGroup.c
++
++$(LOB)/HTAABrow$o : $(CMN)HTAABrow.c $(CMN)HTAABrow.h \
++	 $(CMN)HTAAUtil.h $(CMN)HTUU.h \
++	 $(CMN)HTUtils.h $(CMN)HTString.h \
++	 $(CMN)HTParse.h $(CMN)HTList.h \
++	 $(CMN)HTAssoc.h
++	$(COMPILE) $(CMN)HTAABrow.c
++
++$(LOB)/HTAAProt$o : $(CMN)HTAAProt.c $(CMN)HTAAProt.h \
++	 $(CMN)HTUtils.h $(CMN)HTAAUtil.h \
++	 $(CMN)HTAssoc.h $(CMN)HTLex.h
++	$(COMPILE) $(CMN)HTAAProt.c
++
++$(LOB)/HTAssoc$o : $(CMN)HTAssoc.c $(CMN)HTAssoc.h \
++	$(CMN)HTUtils.h $(CMN)HTString.h $(CMN)HTList.h
++	$(COMPILE) $(CMN)HTAssoc.c
++
++$(LOB)/HTLex$o : $(CMN)HTLex.c $(CMN)HTLex.h $(CMN)HTUtils.h
++	$(COMPILE) $(CMN)HTLex.c
++
++$(LOB)/HTUU$o : $(CMN)HTUU.c $(CMN)HTUU.h $(CMN)HTUtils.h
++	$(COMPILE) $(CMN)HTUU.c
++
++
++#	Communications & Files
++
++$(LOB)/HTTP$o : $(CMN)HTTP.c $(CMN)HTUtils.h $(CMN)HTAABrow.h
++	$(COMPILE) $(CMN)HTTP.c
++
++$(LOB)/HTTCP$o : $(CMN)HTTCP.c $(CMN)HTUtils.h
++	$(COMPILE) $(CMN)HTTCP.c
++
++$(LOB)/HTFile$o : $(CMN)HTFile.c $(CMN)HTUtils.h \
++	 $(CMN)HTMLDTD.h
++	$(COMPILE) $(CMN)HTFile.c
++
++$(LOB)/HTBTree$o : $(CMN)HTBTree.c $(CMN)HTUtils.h
++	$(COMPILE) $(CMN)HTBTree.c
++
++$(LOB)/HTFTP$o : $(CMN)HTFTP.c $(CMN)HTUtils.h
++	$(COMPILE) $(CMN)HTFTP.c
++
++$(LOB)/HTAccess$o : $(CMN)HTAccess.c $(CMN)HTUtils.h
++	$(COMPILE) $(CMN)HTAccess.c
++
++$(LOB)/HTParse$o : $(CMN)HTParse.c $(CMN)HTUtils.h
++	$(COMPILE) $(CMN)HTParse.c
++
++$(LOB)/HTVMS_WaisUI$o : $(CMN)HTVMS_WaisUI.c $(CMN)HTUtils.h
++	$(COMPILE) $(CMN)HTVMS_WaisUI.c
++
++$(LOB)/HTDOS$o : $(CMN)HTDOS.c $(CMN)HTUtils.h
++	$(COMPILE) $(CMN)HTDOS.c
++
++# Utilities
++$(LOB)/dtd_util$o : $(CMN)dtd_util.c $(CMN)HTUtils.h
++	$(COMPILE) $(CMN)dtd_util.c
++
++DTD_UTIL = $(LOB)/dtd_util$o $(LOB)/HTMLDTD$o
++
++sources: dtd_util$x src0_HTMLDTD.txt src1_HTMLDTD.txt
++	-rm -f *_HTMLDTD.h
++	./dtd_util$x -l src0_HTMLDTD.txt -s -c -o src0_HTMLDTD.h
++	./dtd_util$x -l src1_HTMLDTD.txt -t -c -o src1_HTMLDTD.h
++	./dtd_util$x -l src0_HTMLDTD.txt -s -h -o hdr_HTMLDTD.h
++
++dtd_util$x: $(DTD_UTIL)
++	$(CC) $(CC_OPTS) $(LDFLAGS) -o $@  $(DTD_UTIL) $(LIBS)
++
++check: dtd_util$x
++	@echo "** comparing builtin src0_HTMLDTD.txt"
++	./dtd_util$x >HTMLDTD.log
++	-diff -u src0_HTMLDTD.txt HTMLDTD.log
++
++	@echo "** comparing reloaded src0_HTMLDTD.txt"
++	./dtd_util$x -l src0_HTMLDTD.txt >HTMLDTD.log
++	-diff -u src0_HTMLDTD.txt HTMLDTD.log
++
++	@echo "** comparing header generated from builtin"
++	./dtd_util$x -s -h -o HTMLDTD.log
++	-diff -u hdr_HTMLDTD.h HTMLDTD.log
++	./dtd_util$x -t -h -o HTMLDTD.log
++	-diff -u hdr_HTMLDTD.h HTMLDTD.log
++
++	@echo "** comparing header generated by load"
++	./dtd_util$x -s -h -o HTMLDTD.log -l src0_HTMLDTD.txt
++	-diff -u hdr_HTMLDTD.h HTMLDTD.log
++	./dtd_util$x -t -h -o HTMLDTD.log -l src1_HTMLDTD.txt
++	-diff -u hdr_HTMLDTD.h HTMLDTD.log
++
++	@echo "** comparing strict source generated from builtin"
++	./dtd_util$x -s -c -o HTMLDTD.log
++	-diff -u src0_HTMLDTD.h HTMLDTD.log
++
++	@echo "** comparing strict source generated by load"
++	./dtd_util$x -s -c -o HTMLDTD.log -l src0_HTMLDTD.txt
++	-diff -u src0_HTMLDTD.h HTMLDTD.log
++
++	@echo "** comparing tagsoup source generated from builtin"
++	./dtd_util$x -t -c -o HTMLDTD.log
++	-diff -u src1_HTMLDTD.h HTMLDTD.log
++
++	@echo "** comparing tagsoup source generated by load"
++	./dtd_util$x -t -c -o HTMLDTD.log -l src1_HTMLDTD.txt
++	-diff -u src1_HTMLDTD.h HTMLDTD.log
++
++# DO NOT DELETE THIS LINE -- make depend depends on it.
+diff --git a/lynx.cfg b/lynx.cfg
+index f01782f..6e1f267 100644
+--- a/lynx.cfg
++++ b/lynx.cfg
+@@ -90,7 +90,8 @@
+ #
+ # Normally we expect you will connect to a remote site, e.g., the Lynx starting
+ # site:
+-STARTFILE:http://lynx.isc.org/
++#STARTFILE:http://lynx.isc.org/
++STARTFILE:file:///
+ #
+ # As an alternative, you may want to use a local URL.  A good choice for this is
+ # the user's home directory:
+diff --git a/makefile b/makefile
+new file mode 100644
+index 0000000..046a591
+--- /dev/null
++++ b/makefile
+@@ -0,0 +1,506 @@
++# $LynxId: makefile.in,v 1.146 2014/03/10 22:07:34 tom Exp $
++##makefile for lynx
++
++SHELL		= /bin/sh
++CDPATH		= .
++
++.SUFFIXES:
++
++prefix		= /usr/local
++exec_prefix	= ${prefix}
++top_srcdir	= .
++srcdir		= .
++builddir	= .
++
++
++CC		= gcc
++CFLAGS		= -O2 -fPIC -g -rdynamic 
++DEFS		= -DHAVE_CONFIG_H
++CPPFLAGS	=  -D_GNU_SOURCE  -DLINUX
++LINT		= 
++ETAGS		= 
++
++BUILD_CC	= ${CC}
++BUILD_CPP	= ${CPP}
++BUILD_CFLAGS	= ${CFLAGS}
++BUILD_CPPFLAGS	= ${CPPFLAGS} -DHAVE_CONFIG_H
++BUILD_EXEEXT	= $x
++BUILD_LDFLAGS	= ${LDFLAGS}
++BUILD_LIBS	= ${LIBS}
++
++x		= 
++o		= .o
++
++LDFLAGS		=   -L/lib64
++LIBS		=  -lncurses -lssl -lcrypto -lpython3.9
++
++INSTALL		= /usr/bin/install -c
++INSTALL_PROGRAM	= ${INSTALL}
++INSTALL_DATA	= ${INSTALL} -m 644
++transform	= s,x,x,
++
++LN_S		= ln -s
++
++TAR		= /usr/bin/tar
++TAR_UP		= $(TAR) -cf -
++TAR_DOWN	= $(TAR) -xf -
++
++# $Format: "LYNX_VERSION	= $ProjectVersion$"$
++LYNX_VERSION	= 2.8.9dev.1
++
++## This is the version which we are developing (or, upon release, make this
++## the same).  Use no dots in the name, since it must work on VMS and MS-DOS.
++VERSION		= 2-8-8
++
++##this is the name of the directory the lynx source code is in.
++##(e.g., lynx2-8-8, not the full path)
++lynxdir= lynx$(VERSION)
++lynxname= lynx$(VERSION)
++
++## The 'DESTDIR' variable allows you to install the program into a different
++## location, e.g., for packaging, without affecting the compiled-in pathnames.
++DESTDIR= 
++
++## Where you want lynx installed
++bindir= ${exec_prefix}/bin
++BINDIR= $(DESTDIR)$(bindir)
++
++## Where you want the lynx man file installed
++mandir= ${datarootdir}/man/man1
++MANDIR= $(DESTDIR)$(mandir)
++
++## Where you want the lynx.cfg file installed
++sysconfdir= ${prefix}/etc
++SYSCONFDIR= $(DESTDIR)$(sysconfdir)
++
++## Where you want the doc-files installed
++datarootdir= ${prefix}/share
++docdir    = ${datarootdir}/lynx_doc
++DOCDIR    = $(DESTDIR)$(docdir)
++
++## Where you want the help-files installed
++helpdir   = ${datarootdir}/lynx_help
++HELPDIR   = $(DESTDIR)$(helpdir)
++
++##set the relative location of the WWW library Implementation directory,
++##from this directory
++##do not set this to be an absolute path!!!
++WWW_DIR   = $(builddir)/WWW/Library/Implementation
++
++##set the relative location of the message-file directory
++##do not set this to be an absolute path!!!
++PO_DIR    = $(builddir)/po
++PO_SRCDIR = $(srcdir)/po
++
++##set the relative location of the main source-directory
++##do not set this to be an absolute path!!!
++SRC_DIR   = $(builddir)/src
++
++##set the relative location of the character-translation data directory
++##do not set this to be an absolute path!!!
++CHR_DIR   = $(SRC_DIR)/chrtrans
++
++## Path to gzip that will compress the help files.
++## It will be used when --enable-gzip-help is set by configure.
++## Leave *both* empty if you don't want to gzip help files.
++COMPRESS_PROG=
++COMPRESS_EXT=
++
++# Path of scripts directory
++scripts_dir=$(srcdir)/scripts
++
++MAKE_RECUR = $(MAKE)  DESTDIR="$(DESTDIR)" CC="$(CC)"
++
++#CFG2HTML = alphatoc.html body.html cattoc.html
++
++# !!!!!!!!!!! SUN resolv LIBRARY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
++# To include resolv in the LIBS="" list for SUN 3, 4 or Solaris OS,
++# point RESOLVLIB to that library.  You need this if you get the message
++# "Alert!:  Unable to connect to remote host" whenever you try to
++# access a host other than localhost and have made Lynx without it.
++# See the PROBLEMS file for more information.
++#RESOLVLIB= -lresolv
++
++# !!!!!!!!!!!!!  DIRECT WAIS ACCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
++# If you are adding direct wais access you must fill in the
++# location of wais.a, client.a and the standard math library, libm.a.
++# You can pick up the most current freeWAIS sources from
++#	ftp://ftp.cnidr.org/pub/NIDR.tools/freewais
++# If you are using freeWAIS-0.202 or older, include -DDECLARE_WAIS_LOGFILES
++# in your SITE_DEFS.
++# Please put an ABSOLUTE address here if you want it to work!
++#WAISLIB= ../../freeWAIS-0.202/bin/client.a ../../freeWAIS-0.202/bin/wais.a /usr/lib/libm.a
++
++# !!!!!!!!!!!!! SLANG Support (For color version of Lynx). !!!!!!!!!!!!!!!!
++# The slang library is an alternative to curses, developed by John E. Davis
++# (davis@space.mit.edu).  Version 0.99-27 or higher is available from
++#	ftp://space.mit.edu/pub/davis
++# It provides color support for Lynx.
++
++# !!!!!!!!!!!!! NCURSES Support (For color version of Lynx). !!!!!!!!!!!!!!
++# If you need ncurses, the latest version can always be found
++# in ftp://invisible-island.net/ncurses/
++# or ftp://ftp.gnu.org/pub/gnu/
++
++# Also be sure to check out the compilation symbols in userdefs.h
++# before building Lynx!
++
++# If you apply patches which require linking to site-specific libraries, set
++# SITE_LIBS to those libraries.
++SITE_LIBS= # Your libraries here
++
++# Set SITE_LYDEFS to one or more of the defines for the WWW Library:
++SITE_LYDEFS = # Your defines here
++
++# Set SITE_DEFS to one or more of the defines for lynx below:
++SITE_DEFS = # Your defines here
++
++# defines for which there are no configure options:
++# -DHP_TERMINAL    For DIM workaround to REVERSE problems on HP terminals.
++# -DIGNORE_CTRL_C  Define if Control-C shouldn't exit lynx.
++# -DNO_RULES       Disables CERN-style access rules (see lynx.cfg).
++# -DMISC_EXP       Enable some truly experimental stuff
++# -DSHORTENED_RBIND  For a SOCKSified lynx with the short version of Rbind.
++# -DSLANG_MBCS_HACK prevent cutoff lines when using UTF8 console (slang only)
++# -DUSE_VASPRINT   Use vasprintf() function
++#
++# if you are linking to freeWAIS-0.202 or older, you should define this
++# in SITE_DEFS
++#
++# -DDECLARE_WAIS_LOGFILES
++#
++# if you have the reverse clear screen problem of some SUN4 systems you
++# should define this in SITE_DEFS
++#
++# -DREVERSE_CLEAR_SCREEN_PROBLEM
++#
++# if you have an SVR4 system with the "type any key" problem, try defining
++# this in LYFLAGS (SITE_LYDEFS) and SITE_DEFS
++#
++# -DSVR4_BSDSELECT
++#
++# Old Data General systems may need this in their SITE_LYDEFS
++# for their inet_addr(host) calls.
++#
++# -DDGUX_OLD
++
++# Many other defines have configure options  (see INSTALLATION, Section II-1c.):
++#
++# for installation of local execution links, please see the file userdefs.h
++
++WWW_CFLAGS = \
++	LY_CFLAGS="$(CFLAGS)" \
++	CPPFLAGS="$(CPPFLAGS)" \
++	LYFLAGS="$(SITE_LYDEFS)"
++
++CHR_CFLAGS = \
++	SITE_DEFS="$(SITE_DEFS)" \
++	BUILD_CFLAGS="$(BUILD_CFLAGS)" \
++	BUILD_CPPFLAGS="$(BUILD_CPPFLAGS)" \
++	BUILD_LDFLAGS="$(BUILD_LDFLAGS)" \
++	BUILD_LIBS="$(BUILD_LIBS)" \
++	BUILD_CC="$(BUILD_CC)"
++
++SRC_CFLAGS = \
++	CFLAGS="$(CFLAGS)" \
++	CPPFLAGS="$(CPPFLAGS)" \
++	LDFLAGS="$(LDFLAGS)" \
++	LIBS="$(LIBS) $(RESOLVLIB) $(WAISLIB) $(SITE_LIBS)" \
++	SITE_DEFS="$(SITE_DEFS)" \
++	WWWINC=$(WWW_DIR) \
++	WWWLIB="../$(WWW_DIR)/libwww.a"
++
++actual_PROG  = `echo lynx|    sed '$(transform)'`
++binary_PROG  = $(actual_PROG)$x
++
++all lynx$x: cfg_defs.h LYHelp.h
++#	$(SHELL) $(scripts_dir)/fixtext.sh $(srcdir)/LYMessages_en.h >LYMessages.c
++#	cd $(PO_DIR) && $(MAKE_RECUR)
++	cd $(WWW_DIR) && $(MAKE_RECUR) $(WWW_CFLAGS)
++	cd $(CHR_DIR) && $(MAKE_RECUR) all $(CHR_CFLAGS)
++	cd $(SRC_DIR) && $(MAKE_RECUR) all $(SRC_CFLAGS)
++
++lint:
++	cd $(WWW_DIR) && $(MAKE_RECUR) LINT="$(LINT)" $(WWW_CFLAGS) $@
++	cd $(SRC_DIR) && $(MAKE_RECUR) LINT="$(LINT)" $(SRC_CFLAGS) $@
++	cd $(CHR_DIR) && $(MAKE_RECUR) LINT="$(LINT)" $@
++
++tags:
++	cd $(WWW_DIR) && $(MAKE_RECUR) $(WWW_CFLAGS) $@
++	cd $(SRC_DIR) && $(MAKE_RECUR) $(SRC_CFLAGS) $@
++	cd $(CHR_DIR) && $(MAKE_RECUR) $@
++
++etags:
++	$(ETAGS) *.[ch] */*.[ch] */*/*.[ch] */*/*/*.[ch]
++
++help:
++	@echo
++	@echo "Please run make with one of the following arguments"
++	@echo "all        -- to make the executable, put it in this directory"
++	@echo "clean      -- removes all '$o' and 'core' files"
++	@echo "distclean  -- removes all generated files"
++	@echo "depend     -- use makedepend to generate header-dependencies"
++	@echo
++
++##Miscellaneous actions
++clean:
++	rm -f WWW/Library/*/*.[aoib]
++	rm -f WWW/Library/*/.created
++	cd $(WWW_DIR) && $(MAKE_RECUR) $@
++	cd $(SRC_DIR) && $(MAKE_RECUR) $@
++#	rm -f LYMessages.c
++#	cd $(PO_DIR) && $(MAKE_RECUR) $@
++	rm -f *.b $(SRC_DIR)/lynx$x *.leaks cfg_defs.h LYHelp.h lint.*
++#	-rm -f $(CFG2HTML)
++	rm -f help_files.sed
++	rm -f core *.core
++
++depend: cfg_defs.h LYHelp.h
++	cd $(WWW_DIR) && $(MAKE_RECUR) $@
++	cd $(SRC_DIR) && $(MAKE_RECUR) $@
++
++distclean: clean
++	-rm -f WWW/Library/*/*~
++	-rm -f WWW/Library/*/*.bak
++	-rm -rf $(SRC_DIR)/obsolete
++	-cd $(WWW_DIR) && $(MAKE_RECUR) $@
++	-cd $(SRC_DIR) && $(MAKE_RECUR) $@
++	-cd $(CHR_DIR) && $(MAKE_RECUR) $@
++#	cd $(PO_DIR) && $(MAKE_RECUR) $@
++#	-rmdir $(PO_DIR)
++	-rm -f *~ *.bak *.sav tags TAGS
++	-rm -f $(WWW_DIR)/makefile $(SRC_DIR)/makefile $(CHR_DIR)/makefile
++#	-rmdir $(WWW_DIR) && rmdir WWW/Library && rmdir WWW
++#	-rmdir $(CHR_DIR) && rmdir $(SRC_DIR)
++	-rm -f makefile lynx_cfg.h config.status config.log config.cache
++	-rm -f lynx$x
++
++maintainer-clean: distclean
++	-find . -type f -name '*.rej' -exec rm -f {} \;
++	-find . -type f -name '*.orig' -exec rm -f {} \;
++	-rm -rf WWW/Library/*/obsolete
++	-rm -f Lynx.prj .*_aux
++
++# Directory containing reference source for patch generation,
++#     either absolute or relative to $(top_srcdir)/..
++REFDIR=orig/$(lynxdir)
++
++lynx.patch: $(top_srcdir) $(top_srcdir)/CHANGES
++	- cd $(top_srcdir)/.. && cd $(REFDIR) && { rm -f \
++		config.log \
++		config.status \
++		lynx_cfg.h \
++			; \
++		for I in . $(SRC_DIR) $(WWW_DIR); do ( set +e; \
++			( set -x; cd $$I && rm -f *.orig *.rej makefile ); : ); \
++		done; }
++	( cd $(top_srcdir)/..; echo "%%% Created `date` by target $@. %%%"; \
++	   if diff -bru /dev/null /dev/null;		     \
++		   then diff -bru $(REFDIR) $(lynxdir);	     \
++		   else diff -brc $(REFDIR) $(lynxdir); fi ) \
++		| grep -v '^Common' \
++		| grep -v '^Binary files ' \
++		| grep -v '^Only ' | tee $@ | egrep '^\-\-\- .*$(lynxdir)'
++
++install: install-bin install-man install-cfg install-lss
++	@echo
++	@echo "Use $(MAKE) install-help to install the help-files"
++	@echo "Use $(MAKE) install-doc to install extra documentation files"
++	@echo
++
++install-full: install install-help install-doc
++	@echo Full installation complete.
++
++install-bin: $(BINDIR) lynx$x
++#	cd $(PO_DIR) && $(MAKE_RECUR) install
++	$(SHELL) -c \
++	'if test -f $(BINDIR)/$(binary_PROG) ; then \
++	      mv -f $(BINDIR)/$(binary_PROG) $(BINDIR)/lynx.old; fi'
++	$(INSTALL_PROGRAM) lynx$x $(BINDIR)/$(binary_PROG)
++
++install-man : $(MANDIR)
++	$(INSTALL_DATA) $(srcdir)/lynx.man $(MANDIR)/$(actual_PROG).1
++
++install-doc : $(DOCDIR) $(HELPDIR)
++	@echo Copying sample files
++	$(SHELL) -c '\
++		( umask 022; \
++		  cd $(srcdir) && \
++		  $(TAR_UP) C[HO]* PROBLEMS README docs samples test ) | \
++		( umask 022; \
++		  cd $(DOCDIR) && \
++		  chmod -R u+w . && $(TAR_DOWN) )'
++	$(SHELL) -c 'if test "$(COMPRESS_PROG)" != "" ; then \
++		(cd $(DOCDIR) && $(COMPRESS_PROG) -f docs/CHANGES*.[0-9] docs/*.announce ) \
++	fi'
++	$(SHELL) -c 'for name in COPYING COPYHEADER; do \
++		cd $(HELPDIR) && rm -f $$name ;\
++		r= ;\
++		test "$(LN_S)" = "ln -s" || r=`echo $(helpdir)|sed -e "s%[^/]\+%..%g" -e "s%^.%%"`; \
++		cd $(HELPDIR) && ( $(LN_S) $$r$(docdir)/$$name . || cp $(DOCDIR)/$$name . );\
++		done'
++	-$(SHELL) -c 'case `id|sed -e "s/(.*//"` in uid=0) chown -R root $(DOCDIR);; esac'
++
++# HPUX 'sed' does not seem to like '=' as pattern delimiter.
++# We cannot use '%' because it may appear in a URL.
++# Andrew filesystem uses '@'.
++# So we limit sed delimiters to '!' and '%', depending on the expected text.
++FIX_SED = tr '=' '"'
++
++LYNX_URL='http://lynx.isc.org/release/breakout'
++LYNXDOCS_URL='$(LYNX_URL)/docs/'
++LYNXHELP_URL='$(LYNX_URL)/lynx_help/'
++
++#$(CFG2HTML) :
++#	@echo 'Making htmlized lynx.cfg'
++#	cd $(SRC_DIR) && $(MAKE_RECUR) LYReadCFG.i
++#	@-rm -f $(CFG2HTML)
++#	sed -n -e '/Config_Type  *Config_Table/,/{0, *0, *0}/ p' $(SRC_DIR)/LYReadCFG.i | \
++#	sed  -e 's/ *{ *"\([^"]*\)".*/\1/' | \
++#	perl $(scripts_dir)/cfg2html.pl -ams $(srcdir)/lynx.cfg
++#	-rm -f $(SRC_DIR)/LYReadCFG.i
++
++help_files.sed : makefile $(srcdir)/lynx_help/help_files.txt
++	@echo Constructing sed-script $@
++	@-rm -f $@ help_files.tmp
++	@cat $(srcdir)/lynx_help/help_files.txt > help_files.tmp
++#	echo 's!$(LYNXDOCS_URL)!file://$(docdir)/!g' >> help_files.tmp
++#	echo 's!$(LYNXHELP_URL)alphatoc.html!alphatoc.html!g' >> help_files.tmp
++#	echo 's!$(LYNXHELP_URL)cattoc.html!cattoc.html!g' >> help_files.tmp
++#	echo 's!alphatoc\.html!alphatoc.html$(COMPRESS_EXT)!g' >> help_files.tmp
++#	echo 's!cattoc\.html!cattoc.html$(COMPRESS_EXT)!g' >> help_files.tmp
++#	echo 's!body\.html!body.html$(COMPRESS_EXT)!g' >> help_files.tmp
++	sed	-e '/^#/d' -e '/^$$/d' \
++		-e 's%\(.*\)=\(.*\@.*\)$$%s=@\1@=\2=g%' \
++		-e 's%\(.*\)=\(http:.*\)$$%s=@\1@=\2=g%' \
++		-e 's%\(.*\)=\(ftp:.*\)$$%s=@\1@=\2=g%' \
++		-e 's%\(.*\)=\(.*\.html\)$$%s=@\1@=\2$(COMPRESS_EXT)=g%' \
++		help_files.tmp | $(FIX_SED) > $@
++	@echo Appending interim-fix for existing html files to $@
++	sed	-e '/^#/d' -e '/[:@]/d' -e '/^$$/d' \
++		-e 's%\(.*\)=\(.*\.html\)$$%s=\2=\2$(COMPRESS_EXT)=g%' \
++		-e 's%\.html=%\\.html=%' \
++		help_files.tmp | $(FIX_SED) >> $@
++	if test -n "$(COMPRESS_EXT)"; then echo "s%\\(\$(COMPRESS_EXT)\\)*\$(COMPRESS_EXT)%$(COMPRESS_EXT)%g" >> $@; fi
++	@-rm -f help_files.tmp
++
++install-help : $(CFG2HTML) help_files.sed $(HELPDIR) $(SYSCONFDIR)
++	-$(SHELL) -c 'if cd "$(HELPDIR)" ; then \
++		WD=`pwd` ; \
++		TAIL=`basename "$(helpdir)"` ; \
++		HEAD=`echo "$$WD"|sed -e "s,/$${TAIL}$$,,"` ; \
++		test "x$$WD" != "x$$HEAD" && rm -fr * ; \
++		fi'
++	test -d $(HELPDIR)/keystrokes || mkdir $(HELPDIR)/keystrokes
++	@echo Translating/copying html files
++#	@$(SHELL) -c 'for f in $(CFG2HTML) ; do \
++#		sed -f help_files.sed $$f > $(HELPDIR)/$$f ; \
++#		done'
++	$(SHELL) -c 'sed_prog=`pwd`/help_files.sed && \
++		cd $(srcdir)/lynx_help && \
++		dirs=keystrokes && \
++		files="*.html */*.html" && \
++		for f in $$files ; do \
++			sed -f $$sed_prog $$f > $(HELPDIR)/$$f ; \
++		done && \
++		if test "$(COMPRESS_PROG)" != "" ; then \
++			(cd $(HELPDIR) && $(COMPRESS_PROG) $$files ) \
++		fi'
++	@echo Updating $(sysconfdir)/lynx.cfg
++	$(SHELL) -c \
++	'if test -f $(SYSCONFDIR)/lynx.cfg ; then \
++		mv $(SYSCONFDIR)/lynx.cfg $(SYSCONFDIR)/lynx.tmp ; \
++	else \
++		cp $(srcdir)/lynx.cfg $(SYSCONFDIR)/lynx.tmp ; \
++	fi'
++	@echo Updating $(sysconfdir)/lynx.cfg to point to installed help-files
++	sed	-e '/^HELPFILE:http/s!^!#!' \
++		-e '/^#HELPFILE:file/s!#!!' \
++		$(SYSCONFDIR)/lynx.tmp | \
++	$(SHELL) $(scripts_dir)/cfg_path.sh lynx_help $(helpdir) | \
++	$(SHELL) $(scripts_dir)/cfg_path.sh lynx_doc  $(helpdir) | \
++	sed	-e '/^HELPFILE:file/s!$$!$(COMPRESS_EXT)!' \
++		-e '/^HELPFILE:file/s!$(COMPRESS_EXT)$(COMPRESS_EXT)$$!$(COMPRESS_EXT)!' \
++		>$(SYSCONFDIR)/lynx.cfg
++	chmod 644 $(SYSCONFDIR)/lynx.cfg
++	-rm -f $(SYSCONFDIR)/lynx.tmp
++
++LYHelp.h : help_files.sed $(srcdir)/LYHelp.hin
++	@echo Creating $@
++	@sed -f help_files.sed $(srcdir)/LYHelp.hin > $@
++	@echo '**********************************************'
++	@echo
++	@$(SHELL) -c 'if test "$(COMPRESS_PROG)" = "" ; then \
++		echo "       Help files will NOT be gzipped."; \
++	else \
++		echo "       Help links point to compressed files"; \
++		echo "       To access them properly you have to type"; \
++		echo "                 make install-help"; \
++	fi'
++	@echo
++	@echo '**********************************************'
++
++cfg_defs.h : $(scripts_dir)/cfg_defs.sh $(scripts_dir)/cfg_edit.sh config.cache lynx_cfg.h
++	@rm -f $@
++	$(SHELL) -c 'SHELL=$(SHELL) $(SHELL) $(scripts_dir)/cfg_defs.sh $(srcdir)'
++
++install-cfg : $(SYSCONFDIR)
++	@$(SHELL) $(scripts_dir)/install-cfg.sh "$(INSTALL_DATA)" $(srcdir)/lynx.cfg $(SYSCONFDIR)/lynx.cfg
++
++install-lss : $(SYSCONFDIR)
++	@$(SHELL) $(scripts_dir)/install-lss.sh "$(INSTALL_DATA)" $(srcdir)/samples/lynx.lss $(SYSCONFDIR)/lynx.lss
++
++uninstall ::
++#	cd $(PO_DIR) && $(MAKE_RECUR) uninstall
++	-rm -f $(BINDIR)/$(binary_PROG)
++	-rm -f $(MANDIR)/$(actual_PROG).1
++	-rm -f $(SYSCONFDIR)/lynx.cfg
++	-rm -f $(SYSCONFDIR)/lynx.lss
++
++uninstall \
++uninstall-help ::
++	-$(SHELL) -c 'if test -d "$(HELPDIR)" ; then \
++		WD=`cd "$(HELPDIR)" && pwd` ; \
++		TAIL=`basename "$(helpdir)"` ; \
++		HEAD=`echo "$$WD"|sed -e "s,/$${TAIL}$$,,"` ; \
++		test "x$$WD" != "x$$HEAD" && rm -rf "$(HELPDIR)"; \
++		fi'
++
++uninstall \
++uninstall-doc ::
++	-$(SHELL) -c 'if test -d "$(DOCDIR)" ; then \
++		WD=`cd "$(DOCDIR)" && pwd` ; \
++		TAIL=`basename "$(docdir)"` ; \
++		HEAD=`echo "$$WD"|sed -e "s,/$${TAIL}$$,,"` ; \
++		test "x$$WD" != "x$$HEAD" && rm -rf "$(DOCDIR)"; \
++		fi'
++	-$(SHELL) -c 'if test -d "$(HELPDIR)" ; then \
++		WD=`cd "$(HELPDIR)" && pwd` ; \
++		TAIL=`basename "$(helpdir)"` ; \
++		HEAD=`echo "$$WD"|sed -e "s,/'$${TAIL}'$$,,"` ; \
++		test "x$$WD" != "x$$HEAD" ; \
++		cd "$(HELPDIR)" && rm -f COPYING COPYHEADER ; \
++		fi'
++
++update-po:
++	rsync -Lrtvz  translationproject.org::tp/latest/lynx/  $(PO_SRCDIR)
++	test -f $(PO_SRCDIR)/makefile && cd $(PO_SRCDIR) && $(MAKE_RECUR) $@
++
++preinstall :
++	@ echo ''
++	@ echo '** Configuration summary for LYNX $(LYNX_VERSION):'
++	@ echo ''
++	@ echo '       program name: '$(actual_PROG)
++	@ echo ''
++	@ echo '      bin directory: '$(BINDIR)
++	@ echo '   config directory: '$(SYSCONFDIR)
++	@ echo '      man directory: '$(MANDIR)
++	@ echo '     help directory: '$(HELPDIR)
++	@ echo '      doc directory: '$(DOCDIR)
++
++$(BINDIR) \
++$(MANDIR) \
++$(SYSCONFDIR) \
++$(HELPDIR) \
++$(DOCDIR) :
++	mkdir -p $@
+diff --git a/rundebug.sh b/rundebug.sh
+new file mode 100755
+index 0000000..7137b42
+--- /dev/null
++++ b/rundebug.sh
+@@ -0,0 +1,2 @@
++# gdb=gdb --args
++$(gdb) python3 -ic 'import ctypes; ctypes.CDLL("src/liblynx.so").main()'
+diff --git a/src/LYCurses.c b/src/LYCurses.c
+index 06ed601..a7af1b9 100644
+--- a/src/LYCurses.c
++++ b/src/LYCurses.c
+@@ -1694,6 +1694,7 @@ void lynx_enable_mouse(int state)
+  */
+ void lynx_nl2crlf(int normal GCC_UNUSED)
+ {
++#if 0
+ #if defined(NCURSES_VERSION_PATCH) && defined(SET_TTY) && defined(TERMIOS) && defined(ONLCR)
+     static TTY saved_tty;
+     static int did_save = FALSE;
+@@ -1701,6 +1702,9 @@ void lynx_nl2crlf(int normal GCC_UNUSED)
+     static int can_fix = TRUE;
+ 
+     if (!did_save) {
++#if 1
++	    can_fix = FALSE;
++#else
+ 	if (cur_term == 0) {
+ 	    can_fix = FALSE;
+ 	} else {
+@@ -1713,8 +1717,10 @@ void lynx_nl2crlf(int normal GCC_UNUSED)
+ 		can_fix = FALSE;
+ #endif
+ 	}
++#endif // 1
+     }
+     if (can_fix) {
++#if 0
+ 	if (normal) {
+ 	    if (!waiting) {
+ 		cur_term->Nttyb.c_oflag |= ONLCR;
+@@ -1730,8 +1736,10 @@ void lynx_nl2crlf(int normal GCC_UNUSED)
+ 		LYrefresh();
+ 	    }
+ 	}
++#endif // 0
+     }
+ #endif
++#endif // 0
+ }
+ 
+ void stop_curses(void)
+diff --git a/src/LYMain.c b/src/LYMain.c
+index 35255d5..529849f 100644
+--- a/src/LYMain.c
++++ b/src/LYMain.c
+@@ -69,6 +69,8 @@
+ #include <LYexit.h>
+ #include <LYLeaks.h>
+ 
++#include "pylo_embed.h"
++
+ /* ahhhhhhhhhh!! Global variables :-< */
+ #ifdef SOCKS
+ BOOLEAN socks_flag = TRUE;
+@@ -885,6 +887,8 @@ void reset_signals(void)
+ 
+ void exit_immediately(int code)
+ {
++	_pylo_finalize();
++
+     reset_signals();
+     exit(code);
+ }
+@@ -1044,6 +1048,14 @@ int main(int argc,
+     atexit(free_lynx_globals);
+ #endif /* LY_FIND_LEAKS */
+ 
++    // Note: may want to do this done earliest, since currently
++    // requires non-curses mode for error printing, but we also
++    // want most of lynx to be loaded before we load py.
++    //
++    // Todo: staged-init?
++	// if (_pylo_initialize())
++	// 	{ return -1; } // destruct
++
+ #ifdef    NOT_ASCII
+     FixCharacters();
+ #endif /* NOT_ASCII */
+@@ -2120,6 +2132,10 @@ int main(int argc,
+ 	LYisConfiguredForX = TRUE;
+     }
+ 
++    // Note: could be done earlier.
++	if (_pylo_initialize())
++		{ return -1; } // destruct
++
+     /*
+      * Here's where we do all the work.
+      */
+diff --git a/src/LYMainLoop.c b/src/LYMainLoop.c
+index e9ccee0..430f5af 100644
+--- a/src/LYMainLoop.c
++++ b/src/LYMainLoop.c
+@@ -50,6 +50,8 @@
+ #include <HTCJK.h>
+ #endif
+ 
++#include "pylo_embed.h"
++
+ #define LinkIsTextarea(linkNumber) \
+ 		(links[linkNumber].type == WWW_FORM_LINK_TYPE && \
+ 		 links[linkNumber].l_form->type == F_TEXTAREA_TYPE)
+@@ -5639,6 +5641,8 @@ int mainloop(void)
+     LYSetDisplayLines();
+ 
+     while (TRUE) {
++    	_pylo_preCycle();
++
+ #ifdef USE_COLOR_STYLE
+ 	if (curdoc.style != NULL)
+ 	    force_load = TRUE;
+@@ -7005,7 +7009,7 @@ int mainloop(void)
+ 		 * Get a keystroke from the user.  Save the last keystroke to
+ 		 * avoid redundant error reporting.
+ 		 */
+-		real_c = c = LYgetch();		/* get user input */
++		real_c = c = _pylo_getCommandChar(); // LYgetch();		/* get user input */
+ 
+ 		if (c != last_key)
+ 		    key_count = 0;
+@@ -7096,6 +7100,9 @@ int mainloop(void)
+ 		((LYKeycodeToKcmd((LYKeymapCode) cmd) != 0)
+ 		 ? LYKeycodeToKcmd((LYKeymapCode) cmd)->name
+ 		 : "unknown")));
++
++	cmd = _pylo_handleCmd(cmd);
++
+ 	switch (cmd) {
+ 	case -1:
+ 	    HTUserMsg(COMMAND_UNKNOWN);
+diff --git a/src/LYStrings.c b/src/LYStrings.c
+index 491d207..61f6ad4 100644
+--- a/src/LYStrings.c
++++ b/src/LYStrings.c
+@@ -1008,10 +1008,12 @@ static const char *expand_tiname(const char *first, size_t len, char **result, c
+     LYStrNCpy(name, first, len);
+     if ((code = lookup_tiname(name, strnames)) >= 0
+ 	|| (code = lookup_tiname(name, strfnames)) >= 0) {
+-	if (cur_term->type.Strings[code] != 0) {
++#if 0
++	if ((*cur_term).type.Strings[code] != 0) {
+ 	    LYStrNCpy(*result, cur_term->type.Strings[code], (final - *result));
+ 	    (*result) += strlen(*result);
+ 	}
++#endif
+     }
+     return first + len;
+ }
+diff --git a/src/makefile b/src/makefile
+new file mode 100644
+index 0000000..bcad559
+--- /dev/null
++++ b/src/makefile
+@@ -0,0 +1,264 @@
++# $LynxId: makefile.in,v 1.73 2014/01/19 14:41:13 tom Exp $
++# template-makefile for Lynx src directory
++
++SHELL		= /bin/sh
++CDPATH		= .
++
++
++prefix		= /usr/local
++datarootdir	= ${prefix}/share
++exec_prefix	= ${prefix}
++top_srcdir	= ..
++srcdir		= .
++VPATH		= .
++
++top_builddir	= ..
++
++# see po/makefile
++localedir	= /usr/local/share/locale
++
++# Symbols which the configure script can set in each makefile:
++CC		= gcc
++CPP		= gcc -E
++CFLAGS		= -O2 -fPIC -g -rdynamic 
++DEFS		= -DHAVE_CONFIG_H
++CHARSET_DEFS	= 
++EXTRA_CPPFLAGS	= 
++CPPFLAGS	=  -D_GNU_SOURCE  -DLINUX
++
++x		= 
++o		= .o
++
++BUILD_CC	= ${CC}
++BUILD_CPP	= ${CPP}
++BUILD_CFLAGS	= ${CFLAGS}
++BUILD_CPPFLAGS	= ${CPPFLAGS} -DHAVE_CONFIG_H
++BUILD_EXEEXT	= $x
++BUILD_LDFLAGS	= ${LDFLAGS}
++BUILD_LIBS	= ${LIBS}
++
++MAKE_RECUR	= $(MAKE)  DESTDIR="$(DESTDIR)" CC="$(CC)"
++
++YACC		= yacc
++WINDRES		= none
++
++LIBS		=  -lncurses -lssl -lcrypto $(RESOLVLIB) $(WAISLIB) $(SITE_LIBS) -lpython3.9
++LDFLAGS		=   -L/lib64
++
++# Symbols inherited from the top-level makefile
++RESOLVLIB	= # FIXME: set in parent makefile
++SITE_DEFS	= # FIXME: set in parent makefile
++SITE_LIBS	= # FIXME: set in parent makefile
++WAISLIB		= # FIXME: set in parent makefile
++
++WWWINC		= WWW/Library/Implementation
++WWWLIB		= $(top_builddir)/WWW/Library/Implementation/libwww.a
++
++AR = ar
++ARFLAGS = "-curv"
++RANLIB = ranlib
++
++LOB = "."
++
++INTLLIB		= 
++INTLDIR_CPPFLAGS= #-I$(top_srcdir)/intl
++
++CPP_OPTS	= $(DEFS) $(CHARSET_DEFS) \
++		-DLOCALEDIR=\"$(localedir)\" \
++		-I. \
++		-I$(top_builddir) \
++		-Ichrtrans \
++		-I$(srcdir)/chrtrans \
++		-I$(top_srcdir) \
++		-I$(top_srcdir)/src \
++		-I$(top_srcdir)/$(WWWINC) \
++		-I$(top_srcdir)/pylo-lynx/src \
++		$(INTLDIR_CPPFLAGS) $(SITE_DEFS) $(EXTRA_CPPFLAGS) $(CPPFLAGS)
++CC_OPTS		= $(CPP_OPTS) $(CFLAGS)
++
++LINT		= 
++LINTOPTS	=
++
++CTAGS		= 
++
++COMPRESS_PROG	=
++COMPRESS_EXT	=
++
++PYLO_OBJ=../pylo-lynx/src/pylo_embed.o
++PYLO_SRC=../pylo-lynx/src/pylo_embed.cpp
++
++CHARTRANS_OBJS	= UCdomap$o UCAux$o UCAuto$o
++OBJS		= \
++	LYebcdic$o \
++	LYClean$o LYShowInfo$o LYEdit$o LYStrings$o LYMail$o \
++	HTAlert$o GridText$o LYGetFile$o LYMain$o LYMainLoop$o \
++	LYCurses$o LYBookmark$o LYmktime$o LYUtils$o LYOptions$o \
++	LYReadCFG$o LYSearch$o LYHistory$o LYForms$o LYPrint$o \
++	LYrcFile$o LYDownload$o LYNews$o LYKeymap$o HTML$o \
++	HTFWriter$o HTInit$o DefaultStyle$o LYUpload$o \
++	LYLeaks$o LYexit$o LYJump$o LYList$o LYCgi$o \
++	LYTraversal$o LYEditmap$o LYCharSets$o LYCharUtils$o \
++	LYMap$o LYCookie$o LYStyle$o LYHash$o LYPrettySrc$o \
++	TRSTable$o parsdate$o $(CHARTRANS_OBJS)  LYSession$o LYLocal$o \
++	$(PYLO_OBJ)
++
++C_SRC		= $(OBJS:$o=.c)
++
++all: lynx$x
++
++.SUFFIXES : $o .i
++
++# yacc builds .c in target directory, not $(srcdir)
++.c$o:
++	
++	$(CC) $(CC_OPTS) -c $<
++
++.c.i:
++	
++	$(CPP) -C $(CPP_OPTS) $< >$@
++
++lynx$x:   message $(top_builddir)/LYHelp.h $(OBJS) $(WWWLIB)
++	@echo "Linking and creating Lynx executable"
++
++
++	# $(AR) $(ARFLAGS) $(LOB)/liblynx.a $(OBJS)
++	# -$(RANLIB) $(LOB)/liblynx.a
++
++	$(CC) -fPIC -shared -o liblynx.so $(OBJS) $(WWWLIB) -lncurses -lssl -lcrypto
++
++	$(CC) $(CC_OPTS) $(LDFLAGS) -o $@  $(OBJS) $(WWWLIB) $(LIBS) $(INTLLIB)
++	@echo "Copying Lynx executable into top-level directory"
++	rm -f $(top_builddir)/$@
++	cp $@ $(top_builddir)/
++	@echo "Welcome to Lynx!"
++
++message:
++	@echo "Compiling Lynx sources"
++
++do_chartrans_stuff:
++	-cd chrtrans && $(MAKE_RECUR) \
++		SITE_DEFS="$(SITE_DEFS)" \
++		BUILD_CFLAGS="$(BUILD_CFLAGS)" \
++		BUILD_CPPFLAGS="$(BUILD_CPPFLAGS)" \
++		BUILD_LDFLAGS="$(BUILD_LDFLAGS)" \
++		BUILD_LIBS="$(BUILD_LIBS)" \
++		BUILD_CC="$(BUILD_CC)" tables
++
++lint:
++	$(LINT) $(LINTOPTS) $(CPP_OPTS) $(C_SRC)  2>&1 |tee $(top_builddir)/lint.lynx
++
++clean:
++	rm -f lynx$x core *.core *.leaks *.i *$o *.bak tags TAGS test_*
++	cd chrtrans && $(MAKE_RECUR) clean
++
++tags:
++	$(CTAGS) *.[ch]
++
++distclean: clean
++
++CMN=$(top_srcdir)/WWW/Library/Implementation/
++
++HTFWriter$o :		$(top_srcdir)/userdefs.h
++HTInit$o :		$(top_srcdir)/userdefs.h
++LYCharSets$o :		$(top_srcdir)/userdefs.h
++LYGetFile$o :		$(top_srcdir)/userdefs.h
++LYKeymap$o :		$(top_srcdir)/userdefs.h
++LYLeaks$o :		$(CMN)LYLeaks.h $(CMN)HTString.h
++LYMail$o :		$(top_srcdir)/userdefs.h
++LYMain$o :		$(top_srcdir)/userdefs.h $(top_builddir)/lynx_cfg.h
++LYMainLoop$o :		$(top_srcdir)/userdefs.h
++LYOptions$o :		$(top_srcdir)/userdefs.h
++LYReadCFG$o :		$(top_srcdir)/userdefs.h
++LYShowInfo$o :		$(top_builddir)/cfg_defs.h
++LYTraversal$o :		$(top_srcdir)/userdefs.h
++LYUtils$o :		$(top_srcdir)/userdefs.h
++LYmktime$o :		$(top_srcdir)/userdefs.h
++LYrcFile$o :		$(top_srcdir)/userdefs.h
++
++LYIcon$o: LYIcon.rc
++	$(WINDRES) -i LYIcon.rc -o LYIcon$o -O coff
++
++$(PYLO_OBJ): $(PYLO_SRC)
++	(cd ../pylo-lynx/src; make) # $(MAKE))
++
++
++CHRTR= chrtrans/
++
++TABLES= \
++ $(CHRTR)cp1250_uni.h \
++ $(CHRTR)cp1251_uni.h \
++ $(CHRTR)cp1252_uni.h \
++ $(CHRTR)cp1253_uni.h \
++ $(CHRTR)cp1255_uni.h \
++ $(CHRTR)cp1256_uni.h \
++ $(CHRTR)cp1257_uni.h \
++ $(CHRTR)cp437_uni.h \
++ $(CHRTR)cp737_uni.h \
++ $(CHRTR)cp775_uni.h \
++ $(CHRTR)cp850_uni.h \
++ $(CHRTR)cp852_uni.h \
++ $(CHRTR)cp857_uni.h \
++ $(CHRTR)cp862_uni.h \
++ $(CHRTR)cp864_uni.h \
++ $(CHRTR)cp866_uni.h \
++ $(CHRTR)cp866u_uni.h \
++ $(CHRTR)cp869_uni.h \
++ $(CHRTR)def7_uni.h \
++ $(CHRTR)dmcs_uni.h \
++ $(CHRTR)hp_uni.h \
++ $(CHRTR)iso01_uni.h \
++ $(CHRTR)iso02_uni.h \
++ $(CHRTR)iso03_uni.h \
++ $(CHRTR)iso04_uni.h \
++ $(CHRTR)iso05_uni.h \
++ $(CHRTR)iso06_uni.h \
++ $(CHRTR)iso07_uni.h \
++ $(CHRTR)iso08_uni.h \
++ $(CHRTR)iso09_uni.h \
++ $(CHRTR)iso10_uni.h \
++ $(CHRTR)iso13_uni.h \
++ $(CHRTR)iso14_uni.h \
++ $(CHRTR)iso15_uni.h \
++ $(CHRTR)koi8r_uni.h \
++ $(CHRTR)koi8u_uni.h \
++ $(CHRTR)mac_uni.h \
++ $(CHRTR)mnem2_suni.h \
++ $(CHRTR)mnem_suni.h \
++ $(CHRTR)next_uni.h \
++ $(CHRTR)pt154_uni.h \
++ $(CHRTR)rfc_suni.h \
++ $(CHRTR)utf8_uni.h \
++ $(CHRTR)viscii_uni.h
++
++$(TABLES):
++	-cd chrtrans && $(MAKE_RECUR) tables
++
++UCdomap$o :	UCdomap.c \
++		chrtrans/UCkd.h \
++		chrtrans/makeuctb$(BUILD_EXEEXT) \
++		chrtrans/makeuctb.c \
++	UCdomap.h $(CMN)UCMap.h $(TABLES) $(top_srcdir)/userdefs.h
++
++chrtrans/makeuctb$(BUILD_EXEEXT):
++	cd chrtrans && $(MAKE_RECUR) makeuctb$(BUILD_EXEEXT)
++
++UCAux$o : UCAux.c $(CMN)UCAux.h $(CMN)UCDefs.h
++LYCookie$o : $(top_srcdir)/userdefs.h
++
++test_mktime.o: $(srcdir)/LYmktime.c
++	$(CC) -o $@ $(CC_OPTS) -DTEST_DRIVER -c $(srcdir)/LYmktime.c
++
++# test-driver for LYmktime
++test_mktime: test_mktime.o parsdate.o LYebcdic.o
++	$(CC) -o $@ $(CC_OPTS) test_mktime.o parsdate.o LYebcdic.o
++
++# update generated source (may be in ".", or srcdir)
++parsdate.c : $(srcdir)/parsdate.y
++	$(YACC)  $(srcdir)/parsdate.y
++	-rm -f $@
++	mv y.tab.c $@
++
++depend : $(TABLES)
++	makedepend -fmakefile -- $(CC_OPTS) -- $(C_SRC)
++
++# DO NOT DELETE THIS LINE -- make depend depends on it.
